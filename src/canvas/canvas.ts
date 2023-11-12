@@ -25,7 +25,7 @@ export class CanvasDrawer {
 		for (let x = 0; x < grid.width; x++) {
 			for (let y = 0; y < grid.height; y++) {
 				const cell = grid.cells[x][y];
-				const color = cell.type === "object" ? `rgb(${cell.potential}, 0, 0)` : "rgb(0, 0, 0)";
+				const color = cell.type === "object" ? `rgb(${cell.potential}, 0, 0)` : `rgb(0, ${cell.potential}, 0)`;
 				this.ctx.fillStyle = color;
 				this.ctx.fillRect(
 					(x * width) / grid.width,
