@@ -1,4 +1,5 @@
 import { Grid } from "../models/grid";
+import { forEveryCell } from "../util/util";
 
 export class CanvasDrawer {
 	private canvas: HTMLCanvasElement;
@@ -22,18 +23,25 @@ export class CanvasDrawer {
 
 	public draw(grid: Grid) {
 		const { width, height } = this.getDimensions();
-		for (let x = 0; x < grid.width; x++) {
-			for (let y = 0; y < grid.height; y++) {
-				const cell = grid.cells[x][y];
-				const color = cell.type === "object" ? `rgb(${cell.potential}, 0, 0)` : `rgb(0, ${cell.potential}, 0)`;
-				this.ctx.fillStyle = color;
-				this.ctx.fillRect(
-					(x * width) / grid.width,
-					(y * height) / grid.height,
-					width / grid.width,
-					height / grid.height
-				);
-			}
-		}
+		forEveryCell(grid, (cell, x, y) => {
+			const color = cell.type === "object" ? `rgb(${cell.potential}, 0, 0)` : `rgb(0, ${cell.potential}, 0)`;
+			this.ctx.fillStyle = color;
+			this.ctx.fillRect((x * width) / grid.width, (y * height) / grid.height, width / grid.width, height / grid.height);
+		});
+	}
+
+	public drawForceField(grid: Grid) {
+		const { width, height } = this.getDimensions();
+		forEveryCell(grid, (cell, x, y) => {
+			if (!cell.force) return;
+			const color = `rgb(0, 255, 255)`;
+			const startX = width * ((x + 0.5) / grid.width);
+			const startY = height * ((y + 0.5) / grid.height);
+			this.ctx.beginPath();
+			this.ctx.moveTo(startX, startY);
+			this.ctx.lineTo(startX - cell.force.x, startY - cell.force.y);
+			this.ctx.strokeStyle = color;
+			this.ctx.stroke();
+		});
 	}
 }
