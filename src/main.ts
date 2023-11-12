@@ -1,8 +1,8 @@
 import { CanvasDrawer } from "./canvas/canvas";
-import { createEmptyGrid, drawRectangularToGrid, upscaleGrid } from "./generator/generator";
+import { drawRectangularToGrid, upscaleGrid } from "./generator/generator";
 import { ObjectCellGroup as CellGroup } from "./models/body";
 import { Cell } from "./models/cell";
-import { Grid } from "./models/grid";
+import { Grid, ZeroPadGrid } from "./models/grid";
 import "./style.css";
 import { updateGrid } from "./updater/updater";
 import { forEveryCell } from "./util/util";
@@ -11,7 +11,8 @@ const canvas = <HTMLCanvasElement | null>document.getElementById("canvas");
 if (!canvas) throw new Error("Canvas not found");
 const drawer = new CanvasDrawer(canvas);
 
-const framerate = 4;
+const framerate = 10;
+const updatesPerDraw = 60;
 
 let grid: Grid;
 
@@ -20,19 +21,19 @@ const createObjectCell = (potential: number, groupId = "g0"): Cell => {
 };
 
 const generateSimpleGrid = () => {
-	grid = createEmptyGrid(5, 5);
+	grid = new ZeroPadGrid(5, 5);
 	grid = drawRectangularToGrid(grid, createObjectCell(100, "g1"), 1, 1, 1, 1);
 	grid = drawRectangularToGrid(grid, createObjectCell(200, "g2"), 3, 3, 1, 1);
-	grid = upscaleGrid(grid, 8);
+	grid = upscaleGrid(grid, 64);
 	return grid;
 };
 
 const init = () => {
-	grid = createEmptyGrid(16, 16);
+	grid = new ZeroPadGrid(16, 16);
 	grid = drawRectangularToGrid(grid, createObjectCell(100, "g1"), 2, 2, 2, 2);
 	grid = drawRectangularToGrid(grid, createObjectCell(200, "g2"), 8, 8, 2, 2);
 	grid = drawRectangularToGrid(grid, createObjectCell(80, "g3"), 2, 8, 1, 2);
-	grid = upscaleGrid(grid, 4);
+	grid = upscaleGrid(grid, 2);
 	grid = generateSimpleGrid();
 	console.log(grid);
 };
@@ -59,12 +60,17 @@ const calculateForcesOnBodies = (grid: Grid) => {
 };
 
 const update = () => {
-	grid = updateGrid(grid);
+	for (let i = 0; i < updatesPerDraw; i++) {
+		grid = updateGrid(grid);
+	}
+
 	// console.log(grid);
-	console.log(calculateForcesOnBodies(grid));
+	// console.log(calculateForcesOnBodies(grid));
+	console.time("draw");
 	drawer.clear();
 	drawer.draw(grid);
-	drawer.drawForceField(grid);
+	console.timeEnd("draw");
+	// drawer.drawForceField(grid);
 };
 
 init();
