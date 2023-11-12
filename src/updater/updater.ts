@@ -1,4 +1,6 @@
+import { Cell } from "../models/cell";
 import { Grid } from "../models/grid";
+import { forEveryCell } from "../util/util";
 
 const zeroIfOutOfBounds = (grid: Grid, x: number, y: number): number => {
 	if (x < 0 || y < 0 || x >= grid.width || y >= grid.height) return 0;
@@ -16,14 +18,14 @@ const getKernel = (grid: Grid, x: number, y: number, edgeScaler = 1 / Math.sqrt(
 
 const getCellForceVector = (grid: Grid, x: number, y: number): { x: number; y: number } => {
 	const edgeScaler = 1 / Math.sqrt(2);
-	const kernelScaler = 1 / (5 + 4 * edgeScaler);
 	const kernel = getKernel(grid, x, y, edgeScaler);
 
-	const [top, vmiddle, bottom] = kernel.map((_, i) => kernel[i][0] + kernel[i][1] + kernel[i][2]);
-	const [left, hmiddle, right] = kernel.map((_, i) => kernel[0][i] + kernel[1][i] + kernel[2][i]);
+	const [top, _vmiddle, bottom] = kernel.map((_, i) => kernel[i][0] + kernel[i][1] + kernel[i][2]);
+	const [left, _hmiddle, right] = kernel.map((_, i) => kernel[0][i] + kernel[1][i] + kernel[2][i]);
 
-	const forceX = kernelScaler * (vmiddle + top - bottom);
-	const forceY = kernelScaler * (hmiddle + left - right);
+	const kernelScaler = 1 / (2 + 4 * edgeScaler);
+	const forceX = kernelScaler * (left - right);
+	const forceY = kernelScaler * (top - bottom);
 	return { x: forceX, y: forceY };
 };
 
@@ -34,21 +36,20 @@ const getCellPotential = (grid: Grid, x: number, y: number): number => {
 	return sumPotential / (5 + 4 * edgeScaler);
 };
 
-const updateGridGravitationalPotential = (grid: Grid): Grid => {
-	const updatedGrid = { ...grid };
-	for (let x = 0; x < grid.width; x++) {
-		for (let y = 0; y < grid.height; y++) {
-			const cell = grid.cells[x][y];
-			if (cell.type !== "object") {
-				updatedGrid.cells[x][y] = { ...cell };
-				updatedGrid.cells[x][y].potential = getCellPotential(grid, x, y);
-				updatedGrid.cells[x][y].force = getCellForceVector(grid, x, y);
-			}
-		}
-	}
-	return updatedGrid;
-};
-
 export const updateGrid = (grid: Grid): Grid => {
-	return updateGridGravitationalPotential(grid);
+	const updatedGrid: Grid = {
+		...grid,
+		cells: Array.from({ length: grid.width }, () => Array.from({ length: grid.height }, () => ({} as Cell))),
+	};
+	forEveryCell(grid, (cell, x, y) => {
+		if (cell.type === "object") {
+			updatedGrid.cells[x][y] = { ...cell };
+			return;
+		}
+		updatedGrid.cells[x][y] = { type: "space", potential: getCellPotential(grid, x, y), force: { x: 0, y: 0 } };
+	});
+	forEveryCell(grid, (_cell, x, y) => {
+		updatedGrid.cells[x][y].force = getCellForceVector(updatedGrid, x, y);
+	});
+	return updatedGrid;
 };

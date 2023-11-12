@@ -2,7 +2,7 @@ import { Cell } from "../models/cell";
 import { Grid } from "../models/grid";
 
 export const createEmptyGrid = (width: number, height: number): Grid => {
-	const spaceCell: Cell = { type: "space", potential: 0 };
+	const spaceCell: Cell = { type: "space", potential: 0, force: { x: 0, y: 0 } };
 	return {
 		width,
 		height,
