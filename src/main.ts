@@ -1,24 +1,34 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import { CanvasDrawer } from "./canvas/canvas";
+import { Cell } from "./models/cell";
+import { Grid } from "./models/grid";
+import "./style.css";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+const createEmptyGrid = (width: number, height: number): Grid => {
+	const spaceCell: Cell = { type: "space", potential: 0 };
+	return {
+		width,
+		height,
+		cells: Array.from({ length: width }, () => Array.from({ length: height }, () => spaceCell)),
+	};
+};
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const canvas = <HTMLCanvasElement | null>document.getElementById("canvas");
+if (!canvas) throw new Error("Canvas not found");
+const drawer = new CanvasDrawer(canvas);
+
+const framerate = 60;
+
+const grid = createEmptyGrid(4, 4);
+
+const init = () => {
+	grid.cells[1][1] = { type: "object", potential: 100 };
+	grid.cells[3][3] = { type: "object", potential: 100 };
+};
+
+const update = () => {
+	drawer.clear();
+	drawer.draw(grid);
+};
+
+init();
+setInterval(() => update(), 1000 / framerate);
